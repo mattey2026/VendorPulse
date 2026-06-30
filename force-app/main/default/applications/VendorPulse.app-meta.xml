@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<LightningApplication xmlns="http://soap.sforce.com/2006/04/metadata">
+    <description>VendorPulse - Vendor Obligation and Renewal Platform</description>
+    <formFactors>Large</formFactors>
+    <label>VendorPulse</label>
+    <navType>Standard</navType>
+    <tabs>OMP_Renewal_Tracker</tabs>
+    <tabs>OMP_Renewal__c</tabs>
+    <tabs>standard-Home</tabs>
+    <tabs>standard-report</tabs>
+    <tabs>standard-Dashboard</tabs>
+    <uiType>Lightning</uiType>
+</LightningApplication>

@@ -1,0 +1,80 @@
+<template>
+    <section class="omp-modal-overlay">
+        <div class="omp-modal">
+            <div class="omp-modal-header">
+                <div class="omp-modal-title">
+                    <lightning-icon icon-name="utility:refresh" size="small" class="omp-modal-icon"></lightning-icon>
+                    {modalTitle}
+                </div>
+                <button class="omp-modal-close" onclick={handleClose} title="Close">✕</button>
+            </div>
+
+            <template if:true={isOverdue}>
+                <div class="omp-modal-alert">
+                    ⚠ Overdue by {overdueByDays} days — licence may have lapsed. Escalate VGO approval immediately.
+                </div>
+            </template>
+
+            <div class="omp-modal-body">
+                <div class="omp-modal-section-title">Contract details</div>
+                <div class="omp-form-grid">
+                    <lightning-input label="OEM" value={renewal.OEM__c} data-field="OEM__c" onchange={handleFieldChange} required></lightning-input>
+                    <lightning-input label="Vendor name" value={renewal.Vendor_Name__c} data-field="Vendor_Name__c" onchange={handleFieldChange} required></lightning-input>
+                    <lightning-input label="Description" value={renewal.Description__c} data-field="Description__c" onchange={handleFieldChange} required class="omp-full-span"></lightning-input>
+                    <lightning-input label="PO number" value={renewal.PO_Number__c} data-field="PO_Number__c" onchange={handleFieldChange} placeholder="e.g. 1401240024"></lightning-input>
+                    <lightning-combobox label="Category" value={renewal.Category__c} options={categoryOptions} data-field="Category__c" onchange={handleFieldChange} required></lightning-combobox>
+                    <lightning-combobox label="Currency" value={renewal.Currency__c} options={currencyOptions} data-field="Currency__c" onchange={handleFieldChange}></lightning-combobox>
+                    <lightning-input type="number" label="PO amount" value={renewal.PO_Amount__c} data-field="PO_Amount__c" onchange={handleFieldChange} formatter="decimal"></lightning-input>
+                    <lightning-input type="number" label="ACV (USD)" value={renewal.ACV_USD__c} data-field="ACV_USD__c" onchange={handleFieldChange} formatter="decimal"></lightning-input>
+                    <lightning-input type="number" label="Last year ACV (USD)" value={renewal.Last_Year_ACV_USD__c} data-field="Last_Year_ACV_USD__c" onchange={handleFieldChange} formatter="decimal"></lightning-input>
+                    <lightning-input type="number" label="Estimated PO (TCV USD)" value={renewal.Estimated_PO_TCV_USD__c} data-field="Estimated_PO_TCV_USD__c" onchange={handleFieldChange} formatter="decimal"></lightning-input>
+                </div>
+
+                <div class="omp-modal-section-title omp-mt">Dates and duration</div>
+                <div class="omp-form-grid">
+                    <lightning-input type="date" label="Start date" value={renewal.Start_Date__c} data-field="Start_Date__c" onchange={handleFieldChange} required></lightning-input>
+                    <lightning-input type="date" label="End date" value={renewal.End_Date__c} data-field="End_Date__c" onchange={handleFieldChange} required></lightning-input>
+                    <lightning-input type="number" label="Duration (years)" value={renewal.Duration_Years__c} data-field="Duration_Years__c" onchange={handleFieldChange} step="0.5"></lightning-input>
+                    <lightning-input type="number" label="Due year" value={renewal.Due_Year__c} data-field="Due_Year__c" onchange={handleFieldChange}></lightning-input>
+                </div>
+
+                <div class="omp-modal-section-title omp-mt">Hygiene and assignment</div>
+                <div class="omp-form-grid">
+                    <lightning-combobox label="Hygiene status" value={renewal.Hygiene_Status__c} options={statusOptions} data-field="Hygiene_Status__c" onchange={handleFieldChange} required></lightning-combobox>
+                    <lightning-input type="date" label="Closure date (next renewal)" value={renewal.Closure_Date__c} data-field="Closure_Date__c" onchange={handleFieldChange}></lightning-input>
+                </div>
+
+                <div class="omp-form-grid omp-mt">
+                    <lightning-textarea label="Renewal quote" value={renewal.Renewal_Quote__c} data-field="Renewal_Quote__c" onchange={handleFieldChange} max-length="500" class="omp-full-span"></lightning-textarea>
+                    <lightning-textarea label="Escalation notes" value={renewal.Escalation_Notes__c} data-field="Escalation_Notes__c" onchange={handleFieldChange} class="omp-full-span"></lightning-textarea>
+                </div>
+
+                <template if:true={showYoYVariance}>
+                    <div class="omp-variance-panel">
+                        <span class="omp-variance-label">YoY ACV variance</span>
+                        <span class={varianceClass}>{yoyVariance}</span>
+                    </div>
+                </template>
+            </div>
+
+            <div class="omp-modal-footer">
+                <lightning-button label="Cancel" onclick={handleClose}></lightning-button>
+                <template if:false={isNew}>
+                    <lightning-button
+                        label="Escalate to VGO"
+                        icon-name="utility:send"
+                        variant="destructive-text"
+                        onclick={handleEscalate}>
+                    </lightning-button>
+                </template>
+                <lightning-button
+                    label={saveLabel}
+                    icon-name="utility:save"
+                    variant="brand"
+                    onclick={handleSave}
+                    disabled={isSaving}>
+                </lightning-button>
+            </div>
+        </div>
+    </section>
+</template>

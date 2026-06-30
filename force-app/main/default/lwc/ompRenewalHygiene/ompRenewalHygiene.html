@@ -1,0 +1,41 @@
+<template>
+    <div class="hyg-wrap">
+        <div class="hyg-info">
+            The 90-day hygiene process ensures every renewal completes VGO approval, legal review,
+            business sign-off, and PR creation before the end date.
+        </div>
+
+        <!-- Step tiles -->
+        <div class="hyg-steps">
+            <template for:each={steps} for:item="step">
+                <div key={step.id} class={step.cardClass}>
+                    <div class={step.labelClass}>{step.milestone}</div>
+                    <div class="hyg-step-title">{step.title}</div>
+                    <div class="hyg-step-desc">{step.desc}</div>
+                </div>
+            </template>
+        </div>
+
+        <!-- Checklist for most urgent overdue renewal -->
+        <template if:true={hasUrgentRenewal}>
+            <div class="hyg-checklist-header">
+                Hygiene checklist — {urgentRenewal.OEM__c} (PO {urgentRenewal.PO_Number__c})
+                <span class={urgentBadgeClass}>{urgentStatus}</span>
+            </div>
+            <div class="hyg-checklist">
+                <template for:each={checklistItems} for:item="item">
+                    <div key={item.id} class="hyg-check-row">
+                        <span class={item.iconClass}>
+                            <lightning-icon icon-name={item.icon} size="x-small"></lightning-icon>
+                        </span>
+                        <div class="hyg-check-body">
+                            <div class="hyg-check-title">{item.title}</div>
+                            <div class="hyg-check-meta">{item.owner} · Target: {item.targetDate}</div>
+                        </div>
+                        <span class={item.badgeClass}>{item.status}</span>
+                    </div>
+                </template>
+            </div>
+        </template>
+    </div>
+</template>

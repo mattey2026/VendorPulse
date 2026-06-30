@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomTab xmlns="http://soap.sforce.com/2006/04/metadata">
+    <customObject>false</customObject>
+    <description>VendorPulse Renewal Tracker - replaces manual Excel tracker</description>
+    <label>Renewal Tracker</label>
+    <lwcComponent>ompRenewalTracker</lwcComponent>
+    <motif>custom85:renewal</motif>
+</CustomTab>

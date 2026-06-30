@@ -1,0 +1,169 @@
+.calc-shell {
+    font-family: var(--lwc-fontFamily, 'Salesforce Sans', Arial, sans-serif);
+    background: white; border-radius: 12px;
+    box-shadow: 0 16px 48px rgba(0,0,0,.28);
+    width: 540px; max-width: 95vw;
+    overflow: hidden; display: flex; flex-direction: column;
+}
+
+/* ── Header ───────────────────────────────────────────────────────────── */
+.calc-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 16px;
+    background: linear-gradient(135deg, #0176d3 0%, #032d60 100%);
+    color: white;
+}
+.calc-header-left { display: flex; align-items: center; gap: 10px; }
+.calc-icon { font-size: 22px; }
+.calc-title { font-size: 14px; font-weight: 600; }
+.calc-sub   { font-size: 10px; opacity: .8; margin-top: 1px; }
+.calc-close {
+    background: rgba(255,255,255,.15); border: none; cursor: pointer;
+    color: white; font-size: 16px; width: 28px; height: 28px;
+    border-radius: 50%; display: flex; align-items: center; justify-content: center;
+}
+.calc-close:hover { background: rgba(255,255,255,.3); }
+
+/* ── Contract bar ─────────────────────────────────────────────────────── */
+.calc-contract-bar {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 16px; background: #eef4fb;
+    border-bottom: 1px solid #b8d4f0;
+}
+.calc-contract-icon { font-size: 18px; }
+.calc-contract-label { font-size: 10px; font-weight: 600; color: #0176d3; text-transform: uppercase; letter-spacing: .04em; }
+.calc-contract-dates { font-size: 12px; font-weight: 500; color: #181818; margin-top: 1px; }
+
+/* ── TCV input ────────────────────────────────────────────────────────── */
+.calc-tcv-row { padding: 12px 16px; background: #f8f9fa; border-bottom: 1px solid #e5e5e5; }
+.calc-label   { font-size: 11px; font-weight: 600; color: #444; display: block; margin-bottom: 5px; }
+.calc-input-wrap {
+    display: flex; align-items: center;
+    border: 1.5px solid #e5e5e5; border-radius: 6px;
+    background: white; overflow: hidden; transition: border .15s;
+}
+.calc-input-wrap:focus-within { border-color: #0176d3; box-shadow: 0 0 0 2px rgba(1,118,211,.15); }
+.calc-prefix {
+    padding: 0 10px; font-size: 13px; font-weight: 600;
+    color: #0176d3; background: #eef4fb; border-right: 1px solid #e5e5e5;
+    height: 36px; display: flex; align-items: center;
+}
+.calc-input {
+    border: none; outline: none; padding: 0 12px;
+    font-size: 13px; font-family: inherit; height: 36px;
+    flex: 1; min-width: 0; color: #181818;
+}
+
+/* ── Mode tabs ────────────────────────────────────────────────────────── */
+.calc-mode-tabs {
+    display: flex; border-bottom: 1px solid #e5e5e5; background: white;
+}
+.calc-mode-tab {
+    flex: 1; padding: 8px 6px; border: none; background: transparent;
+    font-size: 10px; font-weight: 500; color: #706e6b;
+    cursor: pointer; font-family: inherit;
+    border-bottom: 3px solid transparent; margin-bottom: -1px;
+    transition: all .15s; white-space: nowrap;
+}
+.calc-mode-tab:hover { color: #0176d3; }
+.calc-mode-active { color: #0176d3 !important; border-bottom-color: #0176d3 !important; font-weight: 600 !important; }
+
+/* ── Pro-rata banner ──────────────────────────────────────────────────── */
+.calc-prorata-banner {
+    background: #fffbe6; border-bottom: 1px solid #ffd700;
+    padding: 8px 16px; font-size: 11px; color: #5a4500; line-height: 1.5;
+}
+
+/* ── Year table ───────────────────────────────────────────────────────── */
+.calc-year-rows { padding: 8px 16px 4px; background: white; }
+.calc-table-head {
+    display: grid;
+    grid-template-columns: 44px 1fr 70px 70px 100px;
+    gap: 6px; padding: 5px 6px 8px;
+    border-bottom: 1px solid #e5e5e5; margin-bottom: 2px;
+    font-size: 10px; font-weight: 600; color: #706e6b;
+    text-transform: uppercase; letter-spacing: .04em;
+}
+.calc-year-row {
+    display: grid;
+    grid-template-columns: 44px 1fr 70px 70px 100px;
+    gap: 6px; align-items: center;
+    padding: 7px 6px; border-radius: 6px; transition: background .1s;
+}
+.calc-year-row:hover { background: #f8f9fa; }
+.calc-year-partial { background: #fffbe6 !important; }
+.calc-yr-badge {
+    min-width: 34px; height: 22px; background: #eef4fb; color: #0176d3;
+    border-radius: 4px; font-size: 10px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center; gap: 3px;
+    position: relative;
+}
+.calc-partial-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: #dd7a01; flex-shrink: 0;
+}
+.calc-yr-period { font-size: 10px; color: #444; line-height: 1.4; }
+.calc-yr-days   { font-size: 10px; color: #706e6b; text-align: center; }
+.calc-yr-pct-label { font-size: 11px; font-weight: 500; color: #0176d3; text-align: center; }
+.calc-yr-val    { font-size: 12px; font-weight: 600; color: #181818; text-align: right; }
+.calc-yr-input-wrap {
+    display: flex; align-items: center;
+    border: 1.5px solid #e5e5e5; border-radius: 5px;
+    background: white; overflow: hidden; transition: border .15s;
+}
+.calc-yr-input-wrap:focus-within { border-color: #0176d3; }
+.calc-yr-pct-wrap { max-width: 90px; }
+.calc-prefix-sm {
+    padding: 0 5px; font-size: 10px; color: #0176d3;
+    background: #eef4fb; border-right: 1px solid #e5e5e5;
+    height: 26px; display: flex; align-items: center; font-weight: 600;
+}
+.calc-suffix-sm {
+    padding: 0 5px; font-size: 10px; color: #706e6b;
+    background: #f3f3f3; border-left: 1px solid #e5e5e5;
+    height: 26px; display: flex; align-items: center;
+}
+.calc-yr-input {
+    border: none; outline: none; padding: 0 5px;
+    font-size: 11px; font-family: inherit; height: 26px;
+    min-width: 0; flex: 1; color: #181818;
+}
+
+/* ── Summary ──────────────────────────────────────────────────────────── */
+.calc-summary {
+    background: #f8f9fa; border-top: 1px solid #e5e5e5;
+    padding: 10px 16px; display: flex; flex-direction: column; gap: 5px;
+}
+.calc-sum-row    { display: flex; justify-content: space-between; font-size: 12px; }
+.calc-sum-label  { color: #706e6b; }
+.calc-sum-val    { font-weight: 600; color: #181818; }
+.calc-ok         { color: #2e844a !important; }
+.calc-warn       { color: #c23934 !important; }
+.calc-match-row  { margin-top: 5px; }
+.calc-badge-ok   { background: #effbf3; color: #2e844a; font-size: 11px; font-weight: 600; padding: 4px 10px; border-radius: 10px; display: inline-block; }
+.calc-badge-warn { background: #fef1ee; color: #c23934; font-size: 11px; font-weight: 600; padding: 4px 10px; border-radius: 10px; display: inline-block; }
+
+/* ── Actions ──────────────────────────────────────────────────────────── */
+.calc-actions {
+    display: flex; gap: 8px; padding: 12px 16px;
+    border-top: 1px solid #e5e5e5; background: white; justify-content: flex-end;
+}
+.calc-btn-secondary {
+    padding: 8px 14px; border-radius: 6px; border: 1.5px solid #e5e5e5;
+    background: white; font-size: 12px; font-weight: 600;
+    cursor: pointer; font-family: inherit; color: #444;
+}
+.calc-btn-secondary:hover { border-color: #706e6b; }
+.calc-btn-primary {
+    padding: 8px 18px; border-radius: 6px; background: #0176d3;
+    color: white; border: none; font-size: 12px; font-weight: 600;
+    cursor: pointer; font-family: inherit; transition: background .15s;
+}
+.calc-btn-primary:hover:not([disabled]) { background: #005fb2; }
+.calc-btn-primary[disabled] { background: #c9c9c9; cursor: not-allowed; }
+
+/* ── Tip ──────────────────────────────────────────────────────────────── */
+.calc-tip {
+    font-size: 10px; color: #706e6b; padding: 6px 16px 10px;
+    text-align: center; background: white; line-height: 1.5;
+}

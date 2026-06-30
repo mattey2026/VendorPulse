@@ -1,0 +1,173 @@
+<template>
+  <div class="calc-shell">
+
+    <!-- Header -->
+    <div class="calc-header">
+      <div class="calc-header-left">
+        <span class="calc-icon">🧮</span>
+        <div>
+          <div class="calc-title">Multi-year PO Split Calculator</div>
+          <div class="calc-sub">Pro-rata &amp; custom ACV calculation</div>
+        </div>
+      </div>
+      <button class="calc-close" onclick={handleClose} title="Close">✕</button>
+    </div>
+
+    <!-- Contract period info -->
+    <template if:true={contractPeriodLabel}>
+      <div class="calc-contract-bar">
+        <span class="calc-contract-icon">📅</span>
+        <div>
+          <div class="calc-contract-label">Contract period</div>
+          <div class="calc-contract-dates">{contractPeriodLabel} · {totalDaysLabel}</div>
+        </div>
+      </div>
+    </template>
+
+    <!-- TCV input -->
+    <div class="calc-tcv-row">
+      <label class="calc-label">Total Contract Value (TCV) — USD</label>
+      <div class="calc-input-wrap">
+        <span class="calc-prefix">$</span>
+        <input
+          class="calc-input"
+          type="number"
+          value={tcv}
+          placeholder="e.g. 18500000"
+          onchange={handleTCVChange}
+        />
+      </div>
+    </div>
+
+    <!-- Mode tabs -->
+    <div class="calc-mode-tabs">
+      <button class={modeProRataClass} data-mode="prorata" onclick={handleModeChange}>
+        📐 Pro-rata (by days)
+      </button>
+      <button class={modeEqualClass} data-mode="equal" onclick={handleModeChange}>
+        ⚖️ Equal split
+      </button>
+      <button class={modeCustomClass} data-mode="custom" onclick={handleModeChange}>
+        ✏️ Custom
+      </button>
+      <button class={modePctClass} data-mode="pct" onclick={handleModeChange}>
+        % Based
+      </button>
+    </div>
+
+    <!-- Pro-rata explanation banner -->
+    <template if:true={isProRata}>
+      <div class="calc-prorata-banner">
+        <strong>Pro-rata calculation:</strong> ACV = (Days in period ÷ Total contract days) × TCV.<br/>
+        Automatically handles partial years when PO starts/ends mid-year.
+      </div>
+    </template>
+
+    <!-- Year breakdown table -->
+    <div class="calc-year-rows">
+      <div class="calc-table-head">
+        <span>Year</span>
+        <span>Period</span>
+        <span>Days</span>
+        <template if:true={isProRata}><span>% of TCV</span><span>ACV (USD)</span></template>
+        <template if:true={isEqual}><span>ACV (USD)</span></template>
+        <template if:true={isCustom}><span>ACV (USD)</span></template>
+        <template if:true={isPct}><span>%</span><span>ACV (USD)</span></template>
+      </div>
+
+      <template for:each={yearRows} for:item="row">
+        <div key={row.year} class={row.rowClass}>
+          <div class="calc-yr-badge">
+            Y{row.year}
+            <template if:true={row.isPartial}>
+              <span class="calc-partial-dot" title="Partial year"></span>
+            </template>
+          </div>
+          <div class="calc-yr-period">{row.period}</div>
+          <div class="calc-yr-days">{row.days}</div>
+
+          <!-- Pro-rata: show % and computed ACV -->
+          <template if:true={isProRata}>
+            <div class="calc-yr-pct-label">{row.pctOfTotal}</div>
+            <div class="calc-yr-val">{row.acvComputed}</div>
+          </template>
+
+          <!-- Equal: show computed ACV -->
+          <template if:true={isEqual}>
+            <div class="calc-yr-val">{row.acvComputed}</div>
+          </template>
+
+          <!-- Custom: editable ACV input, pre-filled with pro-rata -->
+          <template if:true={isCustom}>
+            <div class="calc-yr-input-wrap">
+              <span class="calc-prefix-sm">$</span>
+              <input
+                class="calc-yr-input"
+                type="number"
+                value={row.customACV}
+                data-year={row.year}
+                onchange={handleCustomACVChange}
+                placeholder="Enter ACV"
+              />
+            </div>
+          </template>
+
+          <!-- % based: editable % + computed ACV -->
+          <template if:true={isPct}>
+            <div class="calc-yr-input-wrap calc-yr-pct-wrap">
+              <input
+                class="calc-yr-input"
+                type="number"
+                value={row.pct}
+                data-year={row.year}
+                onchange={handlePctChange}
+                placeholder="0"
+                max="100"
+              />
+              <span class="calc-suffix-sm">%</span>
+            </div>
+            <div class="calc-yr-val">{row.pctACV}</div>
+          </template>
+        </div>
+      </template>
+    </div>
+
+    <!-- Summary -->
+    <div class="calc-summary">
+      <div class="calc-sum-row">
+        <span class="calc-sum-label">TCV entered</span>
+        <span class="calc-sum-val">{tcvFormatted}</span>
+      </div>
+      <div class="calc-sum-row">
+        <span class="calc-sum-label">Sum of ACVs</span>
+        <span class={sumClass}>{sumFormatted}</span>
+      </div>
+      <div class="calc-sum-row">
+        <span class="calc-sum-label">Difference</span>
+        <span class={diffClass}>{diffLabel}</span>
+      </div>
+      <div class="calc-match-row">
+        <template if:true={isMatch}>
+          <span class="calc-badge-ok">✓ ACVs match TCV exactly</span>
+        </template>
+        <template if:false={isMatch}>
+          <span class="calc-badge-warn">⚠ Adjust values until difference = $0</span>
+        </template>
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="calc-actions">
+      <button class="calc-btn-secondary" onclick={handleReset}>↺ Reset</button>
+      <button class="calc-btn-primary" onclick={handleApply} disabled={isNotMatch}>
+        ✓ Apply to split modal
+      </button>
+    </div>
+
+    <div class="calc-tip">
+      💡 Pro-rata automatically handles partial years. Switch to Custom to override any year.
+      Calculator closes when the PO is saved.
+    </div>
+
+  </div>
+</template>

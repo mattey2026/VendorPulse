@@ -1,0 +1,201 @@
+<template>
+  <section class="ci-overlay" onclick={handleClose}>
+    <div class="ci-modal" onclick={stopProp}>
+
+      <!-- Header -->
+      <div class="ci-header">
+        <div class="ci-header-left">
+          <span class="ci-icon">📥</span>
+          <div>
+            <div class="ci-title">VendorPulse Data Import</div>
+            <div class="ci-sub">Upload, map, preview, and import renewal records — Data Loader style</div>
+          </div>
+        </div>
+        <button class="ci-close" onclick={handleClose}>✕</button>
+      </div>
+
+      <!-- Step indicator -->
+      <div class="ci-steps">
+        <div class="ci-step-item">
+          <div class="ci-step-num ci-step-active">1</div>
+          <span>Upload CSV</span>
+        </div>
+        <div class="ci-step-line"></div>
+        <div class="ci-step-item">
+          <div class="ci-step-num ci-step-active">2</div>
+          <span>Map fields</span>
+        </div>
+        <div class="ci-step-line"></div>
+        <div class="ci-step-item">
+          <div class="ci-step-num ci-step-active">3</div>
+          <span>Preview</span>
+        </div>
+        <div class="ci-step-line"></div>
+        <div class="ci-step-item">
+          <div class="ci-step-num ci-step-active">4</div>
+          <span>Import</span>
+        </div>
+      </div>
+
+      <div class="ci-body">
+
+        <!-- ═══ STEP 1: UPLOAD ═══ -->
+        <template if:true={isStep1}>
+          <div class="ci-upload-zone" ondragover={handleDragOver} ondrop={handleDrop}>
+            <div class="ci-upload-icon">📄</div>
+            <div class="ci-upload-title">Drag and drop your CSV file here</div>
+            <div class="ci-upload-sub">or click below to browse</div>
+            <label class="ci-upload-btn">
+              Choose file
+              <input type="file" accept=".csv" onchange={handleFileChange} class="ci-file-input" />
+            </label>
+            <template if:true={parseError}>
+              <div class="ci-error-banner">⚠ {parseError}</div>
+            </template>
+          </div>
+          <div class="ci-template-box">
+            <div class="ci-template-text">
+              <strong>New to VendorPulse import?</strong> Download our template — it includes all supported columns
+              with one sample row.
+            </div>
+            <button class="ci-btn-secondary" onclick={downloadTemplate}>⬇ Download template</button>
+          </div>
+          <div class="ci-feature-list">
+            <div class="ci-feature-item">✓ Auto-detects column names (just like Data Loader)</div>
+            <div class="ci-feature-item">✓ Map any CSV column to any VendorPulse field</div>
+            <div class="ci-feature-item">✓ Preview before importing — catch errors early</div>
+            <div class="ci-feature-item">✓ Handles dd/mm/yyyy and yyyy-mm-dd date formats</div>
+          </div>
+        </template>
+
+        <!-- ═══ STEP 2: FIELD MAPPING ═══ -->
+        <template if:true={isStep2}>
+          <div class="ci-mapping-header">
+            <div>
+              <div class="ci-mapping-title">Map your columns</div>
+              <div class="ci-mapping-sub">{fileName} · {totalColumnsCount} columns detected · {autoMatchedCount} auto-matched</div>
+            </div>
+          </div>
+
+          <template if:false={canProceedToPreview}>
+            <div class="ci-warn-banner">⚠ Required fields not yet mapped: <strong>{missingRequiredLabel}</strong></div>
+          </template>
+
+          <div class="ci-map-table">
+            <div class="ci-map-table-head">
+              <span>CSV Column</span>
+              <span>Sample Value</span>
+              <span>Maps to VendorPulse Field</span>
+            </div>
+            <template for:each={fieldMappings} for:item="m">
+              <div key={m.idx} class="ci-map-row">
+                <div class="ci-map-csv-col">
+                  {m.csvHeader}
+                  <template if:true={m.isAutoMatched}>
+                    <span class="ci-auto-badge">Auto</span>
+                  </template>
+                </div>
+                <div class="ci-map-sample" title={m.sample}>{m.sample}</div>
+                <div class="ci-map-select">
+                  <lightning-combobox
+                    label=""
+                    value={m.mappedTo}
+                    options={targetFieldOptions}
+                    data-idx={m.idx}
+                    onchange={handleMappingChange}
+                    placeholder="-- Skip this column --">
+                  </lightning-combobox>
+                </div>
+              </div>
+            </template>
+          </div>
+
+          <div class="ci-footer-actions">
+            <button class="ci-btn-secondary" onclick={backToUpload}>← Back</button>
+            <button class="ci-btn-primary" onclick={goToPreview} disabled={canProceedToPreviewDisabled}>
+              Continue to preview →
+            </button>
+          </div>
+        </template>
+
+        <!-- ═══ STEP 3: PREVIEW ═══ -->
+        <template if:true={isStep3}>
+          <div class="ci-preview-header">
+            <div class="ci-preview-title">Preview import</div>
+            <div class="ci-preview-sub">Showing {previewShowingLabel} records · Review before importing</div>
+          </div>
+
+          <div class="ci-preview-table-wrap">
+            <table class="ci-preview-table">
+              <thead>
+                <tr>
+                  <th>#</th><th>OEM</th><th>Description</th><th>PO Number</th>
+                  <th>ACV</th><th>Start</th><th>End</th><th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                <template for:each={previewRecords} for:item="r">
+                  <tr key={r.key}>
+                    <td>{r.rowNum}</td>
+                    <td class="ci-td-bold">{r.oem}</td>
+                    <td class="ci-td-desc">{r.desc}</td>
+                    <td>{r.po}</td>
+                    <td>{r.acv}</td>
+                    <td>{r.start}</td>
+                    <td>{r.end}</td>
+                    <td>{r.status}</td>
+                  </tr>
+                </template>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="ci-total-banner">
+            📊 <strong>{previewCount}</strong> total records will be imported when you click "Import now"
+          </div>
+
+          <div class="ci-footer-actions">
+            <button class="ci-btn-secondary" onclick={backToMapping}>← Back to mapping</button>
+            <button class="ci-btn-primary" onclick={handleImport} disabled={isProcessing}>
+              <template if:false={isProcessing}>✓ Import now</template>
+              <template if:true={isProcessing}>Importing...</template>
+            </button>
+          </div>
+        </template>
+
+        <!-- ═══ STEP 4: RESULT ═══ -->
+        <template if:true={isStep4}>
+          <div class="ci-result">
+            <div class="ci-result-icon">✅</div>
+            <div class="ci-result-title">Import complete</div>
+            <div class="ci-result-stats">
+              <div class="ci-result-stat ci-stat-success">
+                <div class="ci-stat-num">{importResult.successCount}</div>
+                <div class="ci-stat-label">Records imported</div>
+              </div>
+              <div class="ci-result-stat ci-stat-error">
+                <div class="ci-stat-num">{importResult.errorCount}</div>
+                <div class="ci-stat-label">Errors</div>
+              </div>
+            </div>
+
+            <template if:true={hasImportErrors}>
+              <div class="ci-error-list-title">Error details</div>
+              <div class="ci-error-list">
+                <template for:each={indexedErrors} for:item="errItem">
+                  <div key={errItem.key} class="ci-error-item">{errItem.text}</div>
+                </template>
+              </div>
+            </template>
+          </div>
+
+          <div class="ci-footer-actions">
+            <button class="ci-btn-secondary" onclick={startOver}>Import another file</button>
+            <button class="ci-btn-primary" onclick={handleClose}>Done — close</button>
+          </div>
+        </template>
+
+      </div>
+    </div>
+  </section>
+</template>

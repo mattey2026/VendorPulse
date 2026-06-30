@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ValidationRule xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>VR_REN_02_SourcingBuyerRequired</fullName>
+    <active>true</active>
+    <description>Every renewal must have a sourcing buyer assigned</description>
+    <errorConditionFormula>ISNULL(Sourcing_Buyer__c)</errorConditionFormula>
+    <errorMessage>A sourcing buyer must be assigned to every renewal.</errorMessage>
+</ValidationRule>

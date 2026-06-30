@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ValidationRule xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>VR_REN_04_ClosureRequiresDate</fullName>
+    <active>true</active>
+    <description>Closure date required when hygiene status is Closed</description>
+    <errorConditionFormula>AND(ISPICKVAL(Hygiene_Status__c, "Closed"), ISBLANK(Closure_Date__c))</errorConditionFormula>
+    <errorMessage>A closure date (next renewal date) is required when closing a renewal.</errorMessage>
+</ValidationRule>

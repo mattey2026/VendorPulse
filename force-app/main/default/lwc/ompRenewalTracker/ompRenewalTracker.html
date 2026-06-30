@@ -1,0 +1,639 @@
+<template>
+  <div class="vp-shell">
+
+    <!-- ── HEADER ─────────────────────────────────────────────────────── -->
+    <div class="vp-header">
+      <div class="vp-header-left">
+        <div class="vp-logo">VP</div>
+        <div>
+          <div class="vp-title">VendorPulse — Renewal Tracker</div>
+          <div class="vp-sub">Genpact SPS · {todayLabel}</div>
+        </div>
+      </div>
+      <div class="vp-header-right">
+        <lightning-button-icon icon-name="utility:refresh" alternative-text="Refresh" onclick={handleRefresh}></lightning-button-icon>
+        <lightning-button-icon icon-name="utility:help" alternative-text="Guide" onclick={toggleGuide}></lightning-button-icon>
+        <lightning-button label="Import / Export" icon-name="utility:upload" onclick={toggleImport}></lightning-button>
+        <lightning-button label="Add renewal" icon-name="utility:add" variant="brand" onclick={handleNewRenewal}></lightning-button>
+      </div>
+    </div>
+
+    <!-- ── GUIDE ──────────────────────────────────────────────────────── -->
+    <template if:true={showGuide}>
+      <div class="vp-guide">
+        <div class="vp-guide-head"><span class="vp-guide-title">💡 VendorPulse Guide</span><lightning-button-icon icon-name="utility:close" alternative-text="Close" size="small" onclick={toggleGuide}></lightning-button-icon></div>
+        <div class="vp-guide-body">
+          <div class="vp-guide-section">
+            <div class="vp-guide-section-title">📊 Metrics</div>
+            <div class="vp-guide-row"><span class="vp-guide-term">Total tracked</span><span class="vp-guide-def">All active renewals (excluding closed)</span></div>
+            <div class="vp-guide-row"><span class="vp-guide-term">Overdue</span><span class="vp-guide-def">End date passed — licence may have lapsed</span></div>
+            <div class="vp-guide-row"><span class="vp-guide-term">Critical</span><span class="vp-guide-def">Expiring within 30 days — raise PR in SAP now</span></div>
+          </div>
+          <div class="vp-guide-section">
+            <div class="vp-guide-section-title">🔃 Tracker column features</div>
+            <div class="vp-guide-row"><span class="vp-guide-term">Sort</span><span class="vp-guide-def">Click any column header: ↑ asc, ↓ desc</span></div>
+            <div class="vp-guide-row"><span class="vp-guide-term">Drag columns</span><span class="vp-guide-def">Drag any column header to reorder columns</span></div>
+            <div class="vp-guide-row"><span class="vp-guide-term">Reset columns</span><span class="vp-guide-def">Click "Reset columns" to restore default order</span></div>
+          </div>
+          <div class="vp-guide-section">
+            <div class="vp-guide-section-title">📅 FY / Quarter</div>
+            <div class="vp-guide-row"><span class="vp-guide-term">FY chips</span><span class="vp-guide-def">Genpact FY = Apr–Mar</span></div>
+            <div class="vp-guide-row"><span class="vp-guide-term">Q1–Q4</span><span class="vp-guide-def">Q1=Apr–Jun, Q2=Jul–Sep, Q3=Oct–Dec, Q4=Jan–Mar</span></div>
+          </div>
+          <div class="vp-guide-section">
+            <div class="vp-guide-section-title">📊 Dashboard</div>
+            <div class="vp-guide-row"><span class="vp-guide-term">Hover charts</span><span class="vp-guide-def">Mouse over any bar or widget to see exact values</span></div>
+            <div class="vp-guide-row"><span class="vp-guide-term">YoY comparison</span><span class="vp-guide-def">Shows up to 3 years per OEM if data available</span></div>
+          </div>
+        </div>
+      </div>
+    </template>
+
+    <!-- ── IMPORT / EXPORT PANEL ──────────────────────────────────────── -->
+    <template if:true={showImport}>
+      <div class="vp-import">
+        <div class="vp-import-head"><span class="vp-import-title">📥 Import / Export</span><lightning-button-icon icon-name="utility:close" alternative-text="Close" size="small" onclick={toggleImport}></lightning-button-icon></div>
+        <div class="vp-import-body">
+          <div class="vp-import-section-title">📤 Export</div>
+          <div class="vp-import-step"><div class="vp-step-num">1</div><div><div class="vp-step-title">Export current view to CSV</div><div class="vp-step-desc">Downloads all active renewals with current filters applied</div><lightning-button label="Export to CSV" icon-name="utility:download" onclick={exportToCSV}></lightning-button></div></div>
+
+          <div class="vp-import-section-title" style="margin-top:14px">📥 Import from PO dump</div>
+          <div class="vp-import-step"><div class="vp-step-num">1</div><div><div class="vp-step-title">Download import template</div><div class="vp-step-desc">Pre-formatted CSV with all required columns matching Genpact PO dump format</div><lightning-button label="Download CSV template" icon-name="utility:download" onclick={downloadTemplate}></lightning-button></div></div>
+          <div class="vp-import-step"><div class="vp-step-num">2</div><div><div class="vp-step-title">Fill from your PO dump</div><div class="vp-step-desc">Copy renewal transactions from your Excel PO dump. PO numbers must follow format 14012XXXXX.</div></div></div>
+          <div class="vp-import-step">
+            <div class="vp-step-num">3</div>
+            <div>
+              <div class="vp-step-title">Upload &amp; auto-map your CSV</div>
+              <div class="vp-step-desc">Built-in import tool — upload your CSV, fields auto-detect (like Data Loader), preview, then import.</div>
+              <lightning-button label="Open Import Tool" icon-name="utility:upload" variant="brand" onclick={openCsvImporter} style="margin-top:8px"></lightning-button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </template>
+
+    <!-- ── ALERT ──────────────────────────────────────────────────────── -->
+    <template if:true={hasOverdue}>
+      <div class="vp-alert">
+        <lightning-icon icon-name="utility:warning" size="small"></lightning-icon>
+        <div class="vp-alert-text"><strong>{metrics.overdueCount} renewal{overdueLabel} overdue</strong> — licences may have lapsed. Immediate action required.</div>
+        <lightning-button-icon icon-name="utility:close" alternative-text="Dismiss" size="small" onclick={dismissAlert}></lightning-button-icon>
+      </div>
+    </template>
+
+    <!-- ── METRICS ────────────────────────────────────────────────────── -->
+    <div class="vp-metrics">
+      <div class="vp-metric"><div class="vp-metric-label">Total tracked</div><div class="vp-metric-val vp-accent">{metrics.totalRenewals}</div><div class="vp-metric-sub">FY {currentYear}</div></div>
+      <div class="vp-metric"><div class="vp-metric-label">Overdue</div><div class="vp-metric-val vp-danger">{metrics.overdueCount}</div><div class="vp-metric-sub">Past end date</div></div>
+      <div class="vp-metric"><div class="vp-metric-label">Critical (&lt;30 days)</div><div class="vp-metric-val vp-warning">{metrics.criticalCount}</div><div class="vp-metric-sub">Action needed now</div></div>
+      <div class="vp-metric"><div class="vp-metric-label">In progress</div><div class="vp-metric-val vp-success">{metrics.inProgressCount}</div><div class="vp-metric-sub">Engaged or approval</div></div>
+      <div class="vp-metric"><div class="vp-metric-label">Total ACV tracked</div><div class="vp-metric-val">{totalACVFormatted}</div><div class="vp-metric-sub">USD equivalent</div></div>
+      <div class="vp-metric"><div class="vp-metric-label">Renewed YTD</div><div class="vp-metric-val vp-success">{metrics.closedYTD}</div><div class="vp-metric-sub">Closed {currentYear}</div></div>
+    </div>
+
+    <!-- ── TABS ───────────────────────────────────────────────────────── -->
+    <div class="vp-tabs">
+      <button class={tabTrackerClass}   onclick={switchToTracker}>Tracker</button>
+      <button class={tabQtrClass}       onclick={switchToQtr}>📅 Quarterly / FY</button>
+      <button class={tabDashboardClass} onclick={switchToDashboard}>📊 Dashboard</button>
+      <button class={tabHygieneClass}   onclick={switchToHygiene}>Hygiene process</button>
+      <button class={tabClosureClass}   onclick={switchToClosure}>Closure log</button>
+    </div>
+
+    <!-- ══ TRACKER TAB ════════════════════════════════════════════════════ -->
+    <template if:true={isTracker}>
+      <div class="vp-filter-bar">
+        <lightning-input type="search" placeholder="Search OEM, vendor, PO, description..." value={globalSearch} onchange={handleGlobalSearch} class="vp-search"></lightning-input>
+        <lightning-combobox label="" placeholder="All categories" value={filterCategory} options={categoryOptions} onchange={handleCategoryFilter} class="vp-select"></lightning-combobox>
+        <lightning-combobox label="" placeholder="All statuses"   value={filterStatus}   options={statusOptions}   onchange={handleStatusFilter}   class="vp-select"></lightning-combobox>
+        <button class="vp-col-reset-btn" onclick={resetColumns} title="Reset columns to default order">↺ Reset columns</button>
+        <template if:true={hasSortOrFilter}><button class="vp-clear-btn" onclick={clearAll}>✕ Clear</button></template>
+        <span class="vp-count">{filteredCount} record{filteredCountLabel}</span>
+      </div>
+
+      <div class="vp-table-wrap">
+        <template if:true={isLoading}><div class="vp-loading"><lightning-spinner alternative-text="Loading" size="small"></lightning-spinner></div></template>
+        <template if:false={isLoading}>
+          <template if:true={hasPageRecords}>
+            <table class="vp-table" id="vp-tracker-table">
+              <thead>
+                <tr>
+                  <template for:each={columnDefs} for:item="col">
+                    <th key={col.key}
+                        class={col.thClass}
+                        data-col={col.field}
+                        data-idx={col.idx}
+                        draggable="true"
+                        ondragstart={handleDragStart}
+                        ondragover={handleDragOver}
+                        ondrop={handleDrop}
+                        ondragend={handleDragEnd}
+                        onclick={handleSort}>
+                      <div class="vp-th-inner">
+                        <span class="vp-th-drag" title="Drag to reorder">⠿</span>
+                        {col.label}
+                        <span class="vp-sort-arrow">{col.sortArrow}</span>
+                      </div>
+                    </th>
+                  </template>
+                  <th class="vp-th">Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                <template for:each={pageRecords} for:item="w">
+                  <tr key={w.record.Id} class={w.rowClass}>
+                    <template for:each={columnDefs} for:item="col">
+                      <td key={col.key} class={col.tdClass}>
+                        <template if:true={col.isOEM}><span class="vp-td-bold-text">{w.record.OEM__c}</span></template>
+                        <template if:true={col.isVendor}><span class="vp-td-muted-text">{w.record.Vendor_Name__c}</span></template>
+                        <template if:true={col.isDesc}><span class="vp-td-desc-text" title={w.record.Description__c}>{w.record.Description__c}</span></template>
+                        <template if:true={col.isPO}><span class="vp-po">{w.record.PO_Number__c}</span></template>
+                        <template if:true={col.isCat}><span class={w.categoryBadgeClass}>{w.record.Category__c}</span></template>
+                        <template if:true={col.isCur}>{w.record.Currency__c}</template>
+                        <template if:true={col.isPOAmt}>{w.poAmountFormatted}</template>
+                        <template if:true={col.isACV}><div>{w.acvFormatted}</div><div class={w.varianceClass}>{w.acvVariance}</div></template>
+                        <template if:true={col.isEnd}><span class={w.endDateClass}>{w.endDateFormatted}</span></template>
+                        <template if:true={col.isDays}><span class={w.daysBadgeClass}>{w.daysLabel}</span></template>
+                        <template if:true={col.isStatus}><span class={w.statusBadgeClass}>{w.record.Hygiene_Status__c}</span></template>
+                      </td>
+                    </template>
+                    <td><lightning-button label={w.actionLabel} variant={w.actionVariant} data-id={w.record.Id} onclick={handleRowAction}></lightning-button></td>
+                  </tr>
+                </template>
+              </tbody>
+            </table>
+            <div class="vp-pagination">
+              <div class="vp-pg-left">
+                <span class="vp-pg-label">Rows per page</span>
+                <select class="vp-pg-select" onchange={handlePageSizeChange}>
+                  <option value="10" selected={ps10}>10</option>
+                  <option value="20" selected={ps20}>20</option>
+                  <option value="30" selected={ps30}>30</option>
+                  <option value="50" selected={ps50}>50</option>
+                </select>
+                <span class="vp-pg-info">{paginationInfo}</span>
+              </div>
+              <div class="vp-pg-right">
+                <button class="vp-pg-btn" onclick={goFirst} disabled={isFirstPage}>«</button>
+                <button class="vp-pg-btn" onclick={goPrev}  disabled={isFirstPage}>‹</button>
+                <div class="vp-pg-jump">Page <input class="vp-pg-input" type="number" value={currentPage} min="1" max={totalPages} onchange={handlePageJump}/> of {totalPages}</div>
+                <button class="vp-pg-btn" onclick={goNext} disabled={isLastPage}>›</button>
+                <button class="vp-pg-btn" onclick={goLast} disabled={isLastPage}>»</button>
+              </div>
+            </div>
+          </template>
+          <template if:false={hasPageRecords}>
+            <div class="vp-empty"><div class="vp-empty-title">No renewals match your filters</div><lightning-button label="Clear all" onclick={clearAll}></lightning-button></div>
+          </template>
+        </template>
+      </div>
+    </template>
+
+    <!-- ══ QUARTERLY / FY TAB ═════════════════════════════════════════════ -->
+    <template if:true={isQtr}>
+      <div class="vp-qtr-shell">
+        <div class="vp-qtr-filters">
+          <div class="vp-qtr-group"><span class="vp-qtr-group-label">Financial year</span>
+            <template for:each={fyOptions} for:item="fy"><button key={fy.value} class={fy.cls} data-value={fy.value} onclick={handleFYSelect}>{fy.label}</button></template>
+          </div>
+          <div class="vp-qtr-divider"></div>
+          <div class="vp-qtr-group"><span class="vp-qtr-group-label">Quarter</span>
+            <template for:each={qtrOptions} for:item="q"><button key={q.value} class={q.cls} data-value={q.value} onclick={handleQtrSelect}>{q.label}</button></template>
+          </div>
+          <template if:true={hasQtrFilter}><button class="vp-clear-btn" onclick={clearQtrFilters}>✕ Clear</button></template>
+        </div>
+        <div class="vp-qtr-summary">
+          <template for:each={qtrSummaryCards} for:item="card">
+            <div key={card.qtr} class={card.cardClass}>
+              <div class="vp-qtr-card-label">{card.label}</div>
+              <div class="vp-qtr-card-dates">{card.dates}</div>
+              <div class="vp-qtr-card-count">{card.count} renewal{card.countLabel}</div>
+              <div class="vp-qtr-card-acv">{card.acvFormatted}</div>
+            </div>
+          </template>
+        </div>
+        <template if:true={hasQtrRecords}>
+          <template for:each={qtrGroupedRecords} for:item="grp">
+            <div key={grp.key} class="vp-qtr-group-block">
+              <div class={grp.headerClass}>
+                <span class="vp-qtr-grp-title">{grp.label}</span>
+                <span class="vp-qtr-grp-meta">{grp.count} renewal{grp.countLabel} · ACV: {grp.acvFormatted}</span>
+              </div>
+              <table class="vp-table">
+                <thead><tr><th>OEM</th><th>Description</th><th>PO number</th><th>Category</th><th>ACV (USD)</th><th>End date</th><th>Days</th><th>Status</th><th>Action</th></tr></thead>
+                <tbody>
+                  <template for:each={grp.records} for:item="w">
+                    <tr key={w.record.Id} class={w.rowClass}>
+                      <td class="vp-td-bold">{w.record.OEM__c}</td>
+                      <td class="vp-td-desc" title={w.record.Description__c}>{w.record.Description__c}</td>
+                      <td><span class="vp-po">{w.record.PO_Number__c}</span></td>
+                      <td><span class={w.categoryBadgeClass}>{w.record.Category__c}</span></td>
+                      <td class="vp-td-right"><div>{w.acvFormatted}</div><div class={w.varianceClass}>{w.acvVariance}</div></td>
+                      <td class={w.endDateClass}>{w.endDateFormatted}</td>
+                      <td><span class={w.daysBadgeClass}>{w.daysLabel}</span></td>
+                      <td><span class={w.statusBadgeClass}>{w.record.Hygiene_Status__c}</span></td>
+                      <td><lightning-button label={w.actionLabel} variant={w.actionVariant} data-id={w.record.Id} onclick={handleRowAction}></lightning-button></td>
+                    </tr>
+                  </template>
+                </tbody>
+              </table>
+            </div>
+          </template>
+        </template>
+        <template if:false={hasQtrRecords}>
+          <div class="vp-empty"><div class="vp-empty-title">No renewals in selected period</div></div>
+        </template>
+      </div>
+    </template>
+
+    <!-- ══ DASHBOARD TAB ══════════════════════════════════════════════════ -->
+    <template if:true={isDashboard}>
+      <div class="vp-dash-shell">
+
+        <!-- Row 1: 5 KPI cards -->
+        <div class="vp-dash-kpis">
+          <div class="vp-dash-kpi vp-kpi-blue"><div class="vp-kpi-icon">💰</div><div class="vp-kpi-val">{totalACVFormatted}</div><div class="vp-kpi-label">Total ACV tracked</div></div>
+          <div class="vp-dash-kpi vp-kpi-green"><div class="vp-kpi-icon">✅</div><div class="vp-kpi-val">{metrics.closedYTD}</div><div class="vp-kpi-label">Renewed YTD</div></div>
+          <div class="vp-dash-kpi vp-kpi-red"><div class="vp-kpi-icon">🚨</div><div class="vp-kpi-val vp-danger">{metrics.overdueCount}</div><div class="vp-kpi-label">Overdue</div></div>
+          <div class="vp-dash-kpi vp-kpi-amber"><div class="vp-kpi-icon">⏳</div><div class="vp-kpi-val vp-warning">{metrics.inProgressCount}</div><div class="vp-kpi-label">In progress</div></div>
+          <div class="vp-dash-kpi vp-kpi-purple"><div class="vp-kpi-icon">📋</div><div class="vp-kpi-val">{metrics.totalRenewals}</div><div class="vp-kpi-label">Active renewals</div></div>
+        </div>
+
+        <!-- Row 2: Monthly bar chart + Status chart -->
+        <div class="vp-dash-row2">
+          <!-- Monthly expiry bar chart with tooltips -->
+          <div class="vp-dash-card vp-dash-wide">
+            <div class="vp-dash-card-title">📅 Renewals expiring by month (next 12 months)</div>
+            <div class="vp-month-chart">
+              <template for:each={monthlyExpiryData} for:item="m">
+                <div key={m.month} class="vp-month-col">
+                  <div class="vp-month-tooltip-wrap">
+                    <div class={m.barClass} style={m.barStyle}></div>
+                    <div class="vp-tooltip">
+                      <div class="vp-tooltip-title">{m.month}</div>
+                      <div class="vp-tooltip-row"><span>Renewals:</span><strong>{m.count}</strong></div>
+                      <div class="vp-tooltip-row"><span>Total ACV:</span><strong>{m.acvFormatted}</strong></div>
+                      <div class="vp-tooltip-row"><span>OEMs:</span><strong>{m.oemList}</strong></div>
+                    </div>
+                  </div>
+                  <div class="vp-month-label">{m.shortMonth}</div>
+                  <div class="vp-month-count">{m.countLabel}</div>
+                </div>
+              </template>
+            </div>
+          </div>
+
+          <!-- Status donut-style widget -->
+          <div class="vp-dash-card">
+            <div class="vp-dash-card-title">🔄 Hygiene status breakdown</div>
+            <div class="vp-status-chart">
+              <template for:each={statusChartData} for:item="s">
+                <div key={s.status} class="vp-status-row">
+                  <div class="vp-status-label">{s.status}</div>
+                  <div class="vp-status-bar-wrap">
+                    <div class="vp-status-bar-bg">
+                      <div class="vp-status-bar-fill" style={s.barStyle}></div>
+                    </div>
+                    <div class="vp-tooltip vp-tooltip-right">
+                      <div class="vp-tooltip-title">{s.status}</div>
+                      <div class="vp-tooltip-row"><span>Count:</span><strong>{s.count}</strong></div>
+                      <div class="vp-tooltip-row"><span>ACV:</span><strong>{s.acvFormatted}</strong></div>
+                      <div class="vp-tooltip-row"><span>% of total:</span><strong>{s.pct}%</strong></div>
+                    </div>
+                  </div>
+                  <div class="vp-status-right">
+                    <span class={s.badge}>{s.count}</span>
+                    <span class="vp-status-acv">{s.acvFormatted}</span>
+                  </div>
+                </div>
+              </template>
+            </div>
+          </div>
+        </div>
+
+        <!-- Row 3: OEM spend + Category spend (was Spend Analysis tab) -->
+        <div class="vp-dash-row3">
+          <div class="vp-dash-card">
+            <div class="vp-dash-card-title">🏢 ACV by OEM (USD)</div>
+            <template for:each={oemChartData} for:item="row">
+              <div key={row.oem} class="vp-horiz-row">
+                <div class="vp-horiz-label" title={row.oem}>{row.oem}</div>
+                <div class="vp-horiz-wrap">
+                  <div class="vp-horiz-bar" style={row.barStyle}></div>
+                  <div class="vp-tooltip vp-tooltip-right">
+                    <div class="vp-tooltip-title">{row.oem}</div>
+                    <div class="vp-tooltip-row"><span>ACV:</span><strong>{row.acvFormatted}</strong></div>
+                    <div class="vp-tooltip-row"><span>% of total:</span><strong>{row.pct}%</strong></div>
+                    <div class="vp-tooltip-row"><span>Records:</span><strong>{row.count}</strong></div>
+                  </div>
+                </div>
+                <div class="vp-horiz-val">{row.acvFormatted}</div>
+              </div>
+            </template>
+          </div>
+
+          <div class="vp-dash-card">
+            <div class="vp-dash-card-title">📦 ACV by category</div>
+            <template for:each={categoryChartData} for:item="row">
+              <div key={row.category} class="vp-horiz-row">
+                <div class="vp-horiz-label">{row.category}</div>
+                <div class="vp-horiz-wrap">
+                  <div class="vp-horiz-bar" style={row.catBarStyle}></div>
+                  <div class="vp-tooltip vp-tooltip-right">
+                    <div class="vp-tooltip-title">{row.category}</div>
+                    <div class="vp-tooltip-row"><span>ACV:</span><strong>{row.acvFormatted}</strong></div>
+                    <div class="vp-tooltip-row"><span>% of total:</span><strong>{row.pct}%</strong></div>
+                    <div class="vp-tooltip-row"><span>Records:</span><strong>{row.count}</strong></div>
+                  </div>
+                </div>
+                <div class="vp-horiz-val">{row.acvFormatted}</div>
+              </div>
+            </template>
+          </div>
+
+          <!-- Renewal urgency donut widget -->
+          <div class="vp-dash-card">
+            <div class="vp-dash-card-title">🚦 Urgency breakdown</div>
+            <div class="vp-urgency-chart">
+              <template for:each={urgencyChartData} for:item="u">
+                <div key={u.level} class="vp-urgency-row">
+                  <div class={u.dotClass}></div>
+                  <div class="vp-urgency-label">{u.label}</div>
+                  <div class="vp-urgency-bar-wrap">
+                    <div class="vp-urgency-bar-bg">
+                      <div class="vp-urgency-fill" style={u.barStyle}></div>
+                    </div>
+                    <div class="vp-tooltip vp-tooltip-right">
+                      <div class="vp-tooltip-title">{u.label}</div>
+                      <div class="vp-tooltip-row"><span>Count:</span><strong>{u.count}</strong></div>
+                      <div class="vp-tooltip-row"><span>ACV:</span><strong>{u.acvFormatted}</strong></div>
+                    </div>
+                  </div>
+                  <span class="vp-urgency-count">{u.count}</span>
+                </div>
+              </template>
+            </div>
+          </div>
+        </div>
+
+        <!-- Row 4: YoY multi-year comparison (up to 3 years) + Top 5 action -->
+        <div class="vp-dash-row4">
+          <div class="vp-dash-card vp-dash-yoy">
+            <div class="vp-dash-card-title">📈 Multi-year ACV comparison (up to 3 years)</div>
+            <div class="vp-yoy-legend">
+              <span class="vp-yoy-leg"><span class="vp-yoy-dot vp-yoy-y2"></span>2 years ago</span>
+              <span class="vp-yoy-leg"><span class="vp-yoy-dot vp-yoy-y1"></span>Last year</span>
+              <span class="vp-yoy-leg"><span class="vp-yoy-dot vp-yoy-curr"></span>This year</span>
+            </div>
+            <div class="vp-yoy-chart">
+              <template for:each={yoyChartData} for:item="row">
+                <div key={row.oem} class="vp-yoy-row">
+                  <div class="vp-yoy-oem" title={row.oem}>{row.oem}</div>
+                  <div class="vp-yoy-bars">
+                    <template if:true={row.hasY2}>
+                      <div class="vp-yoy-bar-wrap">
+                        <div class="vp-yoy-bar vp-yoy-bar-y2" style={row.y2BarStyle}>
+                          <div class="vp-tooltip">
+                            <div class="vp-tooltip-title">{row.oem} — 2 years ago</div>
+                            <div class="vp-tooltip-row"><span>ACV:</span><strong>{row.y2Formatted}</strong></div>
+                          </div>
+                        </div>
+                      </div>
+                    </template>
+                    <template if:true={row.hasY1}>
+                      <div class="vp-yoy-bar-wrap">
+                        <div class="vp-yoy-bar vp-yoy-bar-y1" style={row.y1BarStyle}>
+                          <div class="vp-tooltip">
+                            <div class="vp-tooltip-title">{row.oem} — last year</div>
+                            <div class="vp-tooltip-row"><span>ACV:</span><strong>{row.y1Formatted}</strong></div>
+                          </div>
+                        </div>
+                      </div>
+                    </template>
+                    <div class="vp-yoy-bar-wrap">
+                      <div class="vp-yoy-bar vp-yoy-bar-curr" style={row.currBarStyle}>
+                        <div class="vp-tooltip">
+                          <div class="vp-tooltip-title">{row.oem} — this year</div>
+                          <div class="vp-tooltip-row"><span>ACV:</span><strong>{row.currFormatted}</strong></div>
+                          <div class="vp-tooltip-row"><span>vs last year:</span><strong class={row.varClass}>{row.variance}</strong></div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <span class={row.varClass}>{row.variance}</span>
+                </div>
+              </template>
+            </div>
+          </div>
+
+          <div class="vp-dash-card">
+            <div class="vp-dash-card-title">⏰ Top 5 renewals needing action</div>
+            <table class="vp-table">
+              <thead><tr><th>OEM</th><th>ACV</th><th>End date</th><th>Days</th><th>Status</th><th>Action</th></tr></thead>
+              <tbody>
+                <template for:each={topActionRecords} for:item="w">
+                  <tr key={w.record.Id} class={w.rowClass}>
+                    <td class="vp-td-bold">{w.record.OEM__c}</td>
+                    <td class="vp-td-right">{w.acvFormatted}</td>
+                    <td class={w.endDateClass}>{w.endDateFormatted}</td>
+                    <td><span class={w.daysBadgeClass}>{w.daysLabel}</span></td>
+                    <td><span class={w.statusBadgeClass}>{w.record.Hygiene_Status__c}</span></td>
+                    <td><lightning-button label={w.actionLabel} variant={w.actionVariant} data-id={w.record.Id} onclick={handleRowAction}></lightning-button></td>
+                  </tr>
+                </template>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Row 5: Savings widget + Category mix widget -->
+        <div class="vp-dash-row5">
+          <div class="vp-dash-card">
+            <div class="vp-dash-card-title">💡 Renewal health score</div>
+            <div class="vp-health-grid">
+              <div class="vp-health-item">
+                <div class="vp-health-ring" style={healthRingStyle}>
+                  <div class="vp-health-score">{healthScore}</div>
+                </div>
+                <div class="vp-health-label">Overall health</div>
+              </div>
+              <div class="vp-health-stats">
+                <div class="vp-health-stat"><span class="vp-hstat-dot vp-hstat-green"></span><span>On track</span><strong>{onTrackCount}</strong></div>
+                <div class="vp-health-stat"><span class="vp-hstat-dot vp-hstat-amber"></span><span>Warning</span><strong>{warningCount}</strong></div>
+                <div class="vp-health-stat"><span class="vp-hstat-dot vp-hstat-red"></span><span>Critical / Overdue</span><strong>{criticalTotalCount}</strong></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="vp-dash-card">
+            <div class="vp-dash-card-title">💰 YoY savings summary</div>
+            <div class="vp-savings-rows">
+              <template for:each={savingsSummary} for:item="s">
+                <div key={s.oem} class="vp-savings-row">
+                  <span class="vp-savings-oem">{s.oem}</span>
+                  <span class={s.varClass}>{s.variance}</span>
+                  <span class="vp-savings-note">{s.note}</span>
+                </div>
+              </template>
+            </div>
+          </div>
+
+          <div class="vp-dash-card">
+            <div class="vp-dash-card-title">📊 Upcoming renewals by quarter (Genpact FY)</div>
+            <div class="vp-qtr-mini-chart">
+              <template for:each={qtrMiniData} for:item="q">
+                <div key={q.qtr} class="vp-qtr-mini-col">
+                  <div class="vp-qtr-mini-wrap">
+                    <div class="vp-qtr-mini-bar" style={q.barStyle}>
+                      <div class="vp-tooltip">
+                        <div class="vp-tooltip-title">{q.label}</div>
+                        <div class="vp-tooltip-row"><span>Renewals:</span><strong>{q.count}</strong></div>
+                        <div class="vp-tooltip-row"><span>ACV:</span><strong>{q.acvFormatted}</strong></div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="vp-qtr-mini-label">{q.qtr}</div>
+                  <div class="vp-qtr-mini-acv">{q.acvShort}</div>
+                </div>
+              </template>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </template>
+
+    <!-- ══ HYGIENE TAB ════════════════════════════════════════════════════ -->
+    <template if:true={isHygiene}>
+      <c-omp-renewal-hygiene></c-omp-renewal-hygiene>
+    </template>
+
+    <!-- ══ CLOSURE LOG TAB ════════════════════════════════════════════════ -->
+    <template if:true={isClosure}>
+      <div class="vp-table-wrap">
+        <template if:true={hasClosureLog}>
+          <table class="vp-table">
+            <thead><tr><th>OEM</th><th>Description</th><th>PO number</th><th>Prev end</th><th>New end date</th><th>ACV (USD)</th><th>Last year ACV</th><th>YoY variance</th></tr></thead>
+            <tbody>
+              <template for:each={closureLog} for:item="w">
+                <tr key={w.record.Id}>
+                  <td class="vp-td-bold">{w.record.OEM__c}</td>
+                  <td class="vp-td-desc">{w.record.Description__c}</td>
+                  <td><span class="vp-po">{w.record.PO_Number__c}</span></td>
+                  <td class="vp-td-muted">{w.endDateFormatted}</td>
+                  <td class="vp-td-muted">{w.closureDateFormatted}</td>
+                  <td class="vp-td-right">{w.acvFormatted}</td>
+                  <td class="vp-td-right vp-td-muted">{w.lastYearACVFormatted}</td>
+                  <td class={w.varianceClass}>{w.acvVariance}</td>
+                </tr>
+              </template>
+            </tbody>
+          </table>
+        </template>
+        <template if:false={hasClosureLog}>
+          <div class="vp-empty"><div class="vp-empty-title">No closed renewals yet</div></div>
+        </template>
+      </div>
+    </template>
+
+  </div>
+
+  <!-- ══ ADD/EDIT MODAL ════════════════════════════════════════════════ -->
+  <template if:true={showModal}>
+    <section class="vp-modal-overlay" onclick={handleOverlayClick}>
+      <div class="vp-modal" onclick={stopProp}>
+        <div class="vp-modal-head"><span class="vp-modal-title">{modalTitle}</span><lightning-button-icon icon-name="utility:close" alternative-text="Close" onclick={handleModalClose}></lightning-button-icon></div>
+        <div class="vp-modal-body">
+          <div class="vp-form-grid">
+            <lightning-input label="OEM *" value={form.OEM__c} data-field="OEM__c" onchange={handleFormChange} required></lightning-input>
+            <lightning-input label="Vendor name *" value={form.Vendor_Name__c} data-field="Vendor_Name__c" onchange={handleFormChange} required></lightning-input>
+            <lightning-input label="Description *" value={form.Description__c} data-field="Description__c" onchange={handleFormChange} required class="vp-full-span"></lightning-input>
+            <lightning-input label="PO number" value={form.PO_Number__c} data-field="PO_Number__c" onchange={handleFormChange} placeholder="e.g. 1401240024"></lightning-input>
+            <lightning-combobox label="Category *" value={form.Category__c} options={categoryOptions} data-field="Category__c" onchange={handleFormChange} required></lightning-combobox>
+            <lightning-combobox label="Currency" value={form.Currency__c} options={currencyOptions} data-field="Currency__c" onchange={handleFormChange}></lightning-combobox>
+            <lightning-input type="number" label="PO amount" value={form.PO_Amount__c} data-field="PO_Amount__c" onchange={handleFormChange}></lightning-input>
+            <lightning-input type="number" label="ACV (USD)" value={form.ACV_USD__c} data-field="ACV_USD__c" onchange={handleFormChange}></lightning-input>
+            <lightning-input type="number" label="Last year ACV (USD)" value={form.Last_Year_ACV_USD__c} data-field="Last_Year_ACV_USD__c" onchange={handleFormChange}></lightning-input>
+            <lightning-input type="number" label="Duration (years)" value={form.Duration_Years__c} data-field="Duration_Years__c" onchange={handleFormChange}></lightning-input>
+            <lightning-input type="date" label="Start date *" value={form.Start_Date__c} data-field="Start_Date__c" onchange={handleFormChange} required></lightning-input>
+            <lightning-input type="date" label="End date * (auto-calculated)" value={form.End_Date__c} data-field="End_Date__c" onchange={handleFormChange} field-level-help="Auto-calculated from Start date + Duration. You can override manually." required></lightning-input>
+            <lightning-combobox label="Hygiene status *" value={form.Hygiene_Status__c} options={statusAllOptions} data-field="Hygiene_Status__c" onchange={handleFormChange} required></lightning-combobox>
+            <lightning-input type="date" label="Closure date" value={form.Closure_Date__c} data-field="Closure_Date__c" onchange={handleFormChange}></lightning-input>
+          </div>
+          <template if:true={showYoY}>
+            <div class="vp-yoy-panel"><span class="vp-yoy-panel-label">YoY ACV variance</span><span class={yoyClass}>{yoyVariance}</span></div>
+          </template>
+        </div>
+        <div class="vp-modal-foot">
+          <lightning-button label="Cancel" onclick={handleModalClose}></lightning-button>
+          <lightning-button label={saveLabel} variant="brand" onclick={handleSave} disabled={isSaving}></lightning-button>
+        </div>
+      </div>
+    </section>
+  </template>
+
+  <!-- ══ SPLIT MODAL ════════════════════════════════════════════════════ -->
+  <template if:true={showSplitModal}>
+    <section class="vp-modal-overlay" onclick={cancelSplit}>
+      <div class="vp-modal vp-split-modal" onclick={stopProp}>
+        <div class="vp-modal-head"><span class="vp-modal-title">📅 Multi-year contract detected</span><lightning-button-icon icon-name="utility:close" alternative-text="Close" onclick={cancelSplit}></lightning-button-icon></div>
+        <div class="vp-modal-body">
+          <div class="vp-split-info">
+            <div class="vp-split-summary"><strong>{splitForm.OEM__c}</strong> — {splitForm.Description__c}<br/><span class="vp-split-meta">{splitDurationLabel} · Total TCV: {splitTCVFormatted}</span></div>
+            <div class="vp-split-question">Split into <strong>{splitYears} yearly records?</strong><br/><span class="vp-split-hint">Year 1 keeps current status. Future years start as Identified with their own hygiene cycle.</span></div>
+            <div class="vp-calc-trigger">
+              <lightning-button label="🧮 Open Calculator" onclick={openCalculator} title="Open the multi-year split calculator"></lightning-button>
+              <span class="vp-calc-hint">Calculate exact per-year values before entering them below</span>
+            </div>
+          </div>
+          <div class="vp-split-years">
+            <template for:each={splitYearRows} for:item="yr">
+              <div key={yr.year} class={yr.rowClass}>
+                <div class="vp-split-year-label">
+                  <span class={yr.badgeClass}>{yr.yearLabel}</span>
+                  <span class="vp-split-dates">{yr.startDate} → {yr.endDate}</span>
+                  <template if:true={yr.isCurrent}><span class="vp-current-badge">Current year</span></template>
+                </div>
+                <div class="vp-split-year-input">
+                  <lightning-input type="number" label="ACV (USD)" value={yr.acv} data-year={yr.year} onchange={handleSplitACVChange}></lightning-input>
+                </div>
+              </div>
+            </template>
+          </div>
+          <div class="vp-split-total">
+            <span>Sum of yearly ACVs</span>
+            <span class={splitTotalClass}>{splitACVTotalFormatted} {splitTotalWarning}</span>
+          </div>
+        </div>
+        <div class="vp-modal-foot">
+          <lightning-button label="Keep as single record" onclick={saveAsSingle}></lightning-button>
+          <lightning-button label="Split into yearly records" variant="brand" onclick={saveAsSplit} disabled={isSaving}></lightning-button>
+        </div>
+      </div>
+    </section>
+  </template>
+
+
+  <!-- ══ CALCULATOR FLOATING PANEL ══════════════════════════════════════ -->
+  <template if:true={showCalculator}>
+    <div class="vp-calc-overlay">
+      <c-omp-calc
+        start-date={splitForm.Start_Date__c}
+        end-date={splitForm.End_Date__c}
+        initial-t-c-v={splitCalcTCV}
+        onapplycalc={handleCalcApply}
+        onclosecalc={handleCalcClose}>
+      </c-omp-calc>
+    </div>
+  </template>
+
+
+  <!-- ══ CSV IMPORT TOOL ════════════════════════════════════════════════ -->
+  <template if:true={showCsvImporter}>
+    <c-omp-csv-import
+      oncloseimport={handleCsvImportClose}
+      onimportcomplete={handleCsvImportComplete}>
+    </c-omp-csv-import>
+  </template>
+
+</template>

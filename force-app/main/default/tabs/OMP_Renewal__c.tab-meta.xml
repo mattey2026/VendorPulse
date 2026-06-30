@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomTab xmlns="http://soap.sforce.com/2006/04/metadata">
+    <customObject>true</customObject>
+    <description>VendorPulse - Renewals list and detail view</description>
+    <label>Renewals</label>
+    <motif>custom85:contract</motif>
+</CustomTab>

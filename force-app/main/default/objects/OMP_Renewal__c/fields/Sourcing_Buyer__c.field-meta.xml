@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Sourcing_Buyer__c</fullName>
+    <label>Sourcing buyer</label>
+    <referenceTo>User</referenceTo>
+    <relationshipLabel>Renewals (Sourcing Buyer)</relationshipLabel>
+    <relationshipName>Renewals_Sourcing_Buyer</relationshipName>
+    <required>false</required>
+    <deleteConstraint>SetNull</deleteConstraint>
+    <trackHistory>true</trackHistory>
+    <type>Lookup</type>
+</CustomField>

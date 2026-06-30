@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ValidationRule xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>VR_REN_03_PONumberFormat</fullName>
+    <active>true</active>
+    <description>PO number must match Genpact format 14012XXXXX when provided</description>
+    <errorConditionFormula>AND(NOT(ISBLANK(PO_Number__c)), NOT(REGEX(PO_Number__c, "14012[0-9]{5}")))</errorConditionFormula>
+    <errorMessage>PO number must match Genpact format 14012XXXXX (e.g. 1401240024).</errorMessage>
+</ValidationRule>

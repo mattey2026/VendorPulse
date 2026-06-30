@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<PermissionSet xmlns="http://soap.sforce.com/2006/04/metadata">
+    <description>Assign to all Platform licence users. Full access to VendorPulse renewal tracker.</description>
+    <hasActivationRequired>false</hasActivationRequired>
+    <label>VendorPulse - Platform User Full Access</label>
+    <objectPermissions>
+        <allowCreate>true</allowCreate>
+        <allowDelete>false</allowDelete>
+        <allowEdit>true</allowEdit>
+        <allowRead>true</allowRead>
+        <modifyAllRecords>false</modifyAllRecords>
+        <object>OMP_Renewal__c</object>
+        <viewAllRecords>true</viewAllRecords>
+    </objectPermissions>
+    <fieldPermissions><editable>true</editable><field>OMP_Renewal__c.PO_Number__c</field><readable>true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field>OMP_Renewal__c.PO_Amount__c</field><readable>true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field>OMP_Renewal__c.Estimated_PO_TCV_USD__c</field><readable>true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field>OMP_Renewal__c.ACV_USD__c</field><readable>true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field>OMP_Renewal__c.Last_Year_ACV_USD__c</field><readable>true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field>OMP_Renewal__c.Due_Year__c</field><readable>true</readable></fieldPermissions>
+    <fieldPermissions><editable>false</editable><field>OMP_Renewal__c.Days_To_Renewal__c</field><readable>true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field>OMP_Renewal__c.Duration_Years__c</field><readable>true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field>OMP_Renewal__c.Sourcing_Buyer__c</field><readable>true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field>OMP_Renewal__c.Closure_Date__c</field><readable>true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field>OMP_Renewal__c.Renewal_Quote__c</field><readable>true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field>OMP_Renewal__c.Escalation_Notes__c</field><readable>true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field>OMP_Renewal__c.Alert_Sent_90__c</field><readable>true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field>OMP_Renewal__c.Alert_Sent_60__c</field><readable>true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field>OMP_Renewal__c.Alert_Sent_30__c</field><readable>true</readable></fieldPermissions>
+    <classAccesses><apexClass>OMP_RenewalController</apexClass><enabled>true</enabled></classAccesses>
+    <classAccesses><apexClass>OMP_RenewalHygieneScheduler</apexClass><enabled>true</enabled></classAccesses>
+</PermissionSet>
