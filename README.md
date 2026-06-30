@@ -1,58 +1,150 @@
-# Salesforce DX Project
+# VendorPulse Renewal Tracker — V1.0
 
-Salesforce DX is a development approach that brings source-driven development, team collaboration, and continuous integration to the Salesforce Platform. Instead of working directly in an org through a web browser, you work with metadata as source files in a local DX project, track changes in version control, and deploy through automated processes.
+VendorPulse is a Salesforce Lightning Web Component (LWC) application built for the **Genpact SPS (Strategic Procurement Solutions)** team to replace a manual Excel-based PO renewal tracker. It gives Prashant Sehgal, Atul Sharma, and the wider SPS team a single live view of every renewal — its hygiene status, urgency, ACV, and year-over-year trend — without the spreadsheet version conflicts and stale data that come with email-based tracking.
 
-This project template gets you started with the tools and structure you need to build Salesforce applications using source control, scratch orgs, and the Salesforce CLI.
+---
 
-## Prerequisites
+## Why this exists
 
-Before you start, make sure you have:
+The original process: a shared Excel file tracking PO renewals, manually updated, prone to missed renewal windows and version conflicts. VendorPulse moves that into Salesforce as a single source of truth with automated hygiene alerts, multi-year contract handling, and built-in import/export tooling.
 
-- **Salesforce CLI** - Download from [developer.salesforce.com/tools/salesforcecli](https://developer.salesforce.com/tools/salesforcecli). See [Install Salesforce CLI](https://developer.salesforce.com/docs/atlas.en-us.sfdx_setup.meta/sfdx_setup/sfdx_setup_install_cli.htm) for details.
-- **VS Code with Salesforce Extension Pack** - See [Installation Instructions](https://developer.salesforce.com/docs/platform/sfvscode-extensions/guide/install.html) for details. Includes the Agentforce Vibes extension.
-- **A development org** - Sign up for a free Developer Edition org [here](https://developer.salesforce.com/signup).
-- **Dev Hub enabled** (optional, required to create scratch orgs) - You can enable Dev Hub in your development org under Setup > Dev Hub.  See [Provide Developers Access to Salesforce DX Tools](https://developer.salesforce.com/docs/atlas.en-us.sfdx_dev.meta/sfdx_dev/sfdx_setup_dx_tools.htm).
+---
 
-## Project Structure
+## Features
 
-Your DX project follows this structure:
+### Tracker
+- Sortable (ascending/descending) and freely **draggable columns** with a one-click reset to default order
+- Global search plus category/status filters
+- Pagination with selectable page size (10 / 20 / 30 / 50) and direct page-jump
+- Inline Add / Edit modal with client-side validation
+- **End Date auto-calculated** from Start Date + Duration (still manually overridable)
 
-- **`force-app/main/default/`** - Your metadata source files live in this default package directory. You can configure additional package directories in the `sfdx-project.json` file.
-- **`config/`** - Scratch org definitions and project settings
-- **`scripts/`** - Automation scripts for common tasks
-- **`sfdx-project.json`** - Project manifest that defines package directories, namespace, API version, and other project-level settings
+### Quarterly / FY View
+- Genpact financial year (Apr–Mar) aware — Q1 Apr–Jun, Q2 Jul–Sep, Q3 Oct–Dec, Q4 Jan–Mar
+- FY and quarter filter chips, with renewals grouped and ACV-subtotaled per quarter
 
-See [Salesforce DX Project Configuration](https://developer.salesforce.com/docs/atlas.en-us.sfdx_dev.meta/sfdx_dev/sfdx_dev_ws_config.htm).
+### Dashboard
+- 5 KPI cards (Total ACV, Renewed YTD, Overdue, In Progress, Active Renewals)
+- Monthly expiry bar chart, hygiene status breakdown, urgency breakdown
+- ACV by OEM and by category
+- Multi-year (up to 3-year) YoY ACV comparison — hover any bar/widget for exact figures
+- Renewal health score ring, savings summary, quarterly mini chart
+- Top 5 renewals needing immediate action
 
-## Get Started
+### Multi-Year PO Splitting
+- Detects contracts with Duration > 1 year and offers to split into individual yearly records
+- **Built-in pro-rata calculator** (`ompCalc`) — handles mid-year contract starts correctly:
+  - Pro-rata (day-based) — default, accounts for partial years automatically
+  - Equal split
+  - Custom per-year entry
+  - Percentage-based entry
+  - Live validation that yearly ACVs sum exactly to TCV
+  - Auto-closes when the PO record is saved
 
-Ready to start developing? The [Get Started with Salesforce DX](https://developer.salesforce.com/docs/atlas.en-us.sfdx_dev.meta/sfdx_dev/sfdx_dev_get_started_dx.htm) guide walks you through your first project, from creating a scratch org to creating a simple Apex class or LWC to deploying your code to a sandbox.
+### Data Import (`ompCsvImport`)
+- In-app CSV import tool, Data Loader–style 4-step flow: **Upload → Auto-map → Preview → Import**
+- Auto-detects common column header variants (OEM, ACV, PO Number, dates in dd/mm/yyyy or yyyy-mm-dd, etc.)
+- Manual remap available for any column; required-field validation before import
+- Partial-success import with row-level error reporting
+- CSV template download and current-view export to CSV
 
-## Common Salesforce CLI Commands
+### Hygiene Automation
+- `OMP_RenewalHygieneScheduler` runs daily at 07:00 IST
+- Tiered email alerts at 90 / 60 / 30 days before expiry, plus daily overdue escalation
+- 30-day and overdue alerts copy the buyer's manager automatically
+- Alert deduplication via `Alert_Sent_90__c` / `_60__c` / `_30__c` checkboxes
 
-Here are common CLI commands that you'll use the most:
+---
 
-- `sf org login web`: Authorize an org
-- `sf org open`: Open your org in a browser
-- `sf org create scratch`: Create a scratch org
-- `sf project deploy start`: Deploy metadata to your org
-- `sf project retrieve start`: Retrieve metadata from your org
-- `sf template generate <artifact>`: Scaffold new components, such as Apex classes and triggers, LWC components, Lightning apps, and more
-- `sf apex <command>`: Run Apex tests, run anonymous Apex blocks, and view logs
-- `sf data <command>`: Work with test data
-- `sf alias <command>`: Manage org aliases
-- `sf config <command>`: Configure CLI settings
+## Project structure
 
-## Use Agentforce Vibes to Build Lightning Apps
+```
+force-app/main/default/
+├── classes/
+│   ├── OMP_RenewalController.cls            — main controller (CRUD, dashboard metrics, multi-year split, CSV import)
+│   ├── OMP_RenewalControllerTest.cls
+│   ├── OMP_RenewalHygieneScheduler.cls       — daily scheduled alert job
+│   └── OMP_RenewalHygieneSchedulerTest.cls
+└── lwc/
+    ├── ompRenewalTracker/                    — main app: tracker, quarterly/FY, dashboard, closure log
+    ├── ompCalc/                              — floating pro-rata split calculator
+    └── ompCsvImport/                         — CSV import tool with auto field-mapping
+```
 
-Transform your ideas into custom Lightning apps that extend CRM workflows directly in Lightning Experience. Through natural conversations with Agentforce Vibes, implement custom objects and fields, complex business logic, and dynamic UI components. See [Build a Lightning App Using Agentforce Vibes](https://developer.salesforce.com/docs/platform/einstein-for-devs/guide/lexapp-overview.html).
+---
 
-## Additional Resources
+## Setup
 
-- [Agentforce Vibes Developer Guide](https://developer.salesforce.com/docs/platform/einstein-for-devs/guide/einstein-overview.html)
-- [Salesforce CLI Installation Guide](https://developer.salesforce.com/docs/atlas.en-us.sfdx_setup.meta/sfdx_setup/sfdx_setup_intro.htm)
-- [Salesforce DX Developer Guide](https://developer.salesforce.com/docs/atlas.en-us.sfdx_dev.meta/sfdx_dev/)
-- [Salesforce CLI Command Reference](https://developer.salesforce.com/docs/atlas.en-us.sfdx_cli_reference.meta/sfdx_cli_reference/)
-- [Salesforce CLI Plugin Development Guide](https://developer.salesforce.com/docs/platform/salesforce-cli-plugin/guide/conceptual-overview.html)
-- [Salesforce VS Code Extensions Documentation](https://developer.salesforce.com/tools/vscode/)
+**Prerequisites**
+- Salesforce CLI (`sf`)
+- A Salesforce org with the `OMP_Renewal__c` custom object and its fields deployed (see Data Model below)
 
+**Deploy**
+```bash
+git clone https://github.com/mattey2026/VendorPulse.git
+cd VendorPulse
+sf project deploy start --target-org <your-org-alias>
+```
+
+**Schedule the daily hygiene job** (run once in Developer Console or via Anonymous Apex)
+```apex
+System.schedule(
+    'VendorPulse Renewal Hygiene Daily',
+    '0 0 7 * * ?',
+    new OMP_RenewalHygieneScheduler()
+);
+```
+
+---
+
+## Data model — `OMP_Renewal__c`
+
+Key fields used by the application:
+
+| Field | Type | Notes |
+|---|---|---|
+| `OEM__c` | Text | OEM / product name |
+| `Vendor_Name__c` | Text | Reseller / vendor of record |
+| `Description__c` | Text | Renewal description |
+| `PO_Number__c` | Text | Format `14012XXXXX` |
+| `Category__c` | Picklist | IT&T / License / AMC / Services |
+| `Currency__c` | Picklist | INR / USD / EUR / GBP |
+| `PO_Amount__c` | Currency | Local currency PO amount |
+| `Estimated_PO_TCV_USD__c` | Currency | Total contract value in USD |
+| `ACV_USD__c` | Currency | Annual contract value in USD |
+| `Last_Year_ACV_USD__c` | Currency | Prior year ACV, used for YoY variance |
+| `Due_Year__c` | Number | Calendar year the renewal is due |
+| `Start_Date__c` / `End_Date__c` | Date | Contract period |
+| `Days_To_Renewal__c` | Formula | Days remaining to `End_Date__c` |
+| `Duration_Years__c` | Number | Contract length in years |
+| `Sourcing_Buyer__c` | Lookup(User) | Owning SPS buyer |
+| `Hygiene_Status__c` | Picklist | Identified / Engaged / Approval / PR Created / Closed |
+| `Closure_Date__c` | Date | Set when status = Closed |
+| `Alert_Sent_90__c` / `_60__c` / `_30__c` | Checkbox | Alert deduplication flags |
+
+---
+
+## Tech notes
+
+- API version: 59.0
+- No external dependencies — pure LWC + Apex, no managed packages required
+- All charts and visualizations are hand-built (SVG/CSS), no third-party charting library
+- Apex respects platform constraints throughout (e.g. typed variables are never declared inside `for` loop bodies, SObject construction avoids inline method calls per Apex parser rules)
+
+---
+
+## Roadmap
+
+- [ ] Approval workflow (VGO → Legal → Business sign-off) enforced in-app
+- [ ] Smart alert centre tab (centralised view of all open alerts)
+- [ ] One-click vendor email templates (RFQ, reminder, escalation)
+- [ ] Vendor negotiation log and scorecard
+- [ ] Budget vs. actual tracking by category
+- [ ] AI-assisted PO document extraction (upload PDF → auto-create renewal record)
+
+---
+
+## Org
+
+Built for **Genpact SPS (Strategic Procurement Solutions)**.
+Maintained by Sumit Mattey.
