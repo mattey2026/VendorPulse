@@ -1,6 +1,6 @@
 # VendorPulse Renewal Tracker — V1.0
 
-VendorPulse is a Salesforce Lightning Web Component (LWC) application built for the **Genpact SPS (Strategic Procurement Solutions)** team to replace a manual Excel-based PO renewal tracker. It gives Prashant Sehgal, Atul Sharma, and the wider SPS team a single live view of every renewal — its hygiene status, urgency, ACV, and year-over-year trend — without the spreadsheet version conflicts and stale data that come with email-based tracking.
+VendorPulse is a Salesforce Lightning Web Component (LWC) application built for the **Genpact SPS (Strategic Procurement Solutions)** team to replace a manual Excel-based PO renewal tracker. It gives  the wider SPS team a single live view of every renewal — its hygiene status, urgency, ACV, and year-over-year trend — without the spreadsheet version conflicts and stale data that come with email-based tracking.
 
 ---
 
